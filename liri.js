@@ -1,12 +1,14 @@
 require("dotenv").config();
 var axios = require("axios");
 var Spotify = require("node-spotify-api");
+var bandsintown = require("bandsintown");
+var moment = require("moment");
 
 var keys = require("./keys.js");
 var spotify = new Spotify(keys.spotify);
 
 var firstArg = process.argv[2];
-var secondArg = process.argv[3];
+var secondArg = process.argv.slice(3);
 
 start1(firstArg, secondArg);
 
@@ -32,15 +34,45 @@ function runthis(caseData, functionData) {
   }
 }
 
+function getMyBands(artist) {
+  var artist = process.argv.slice(3).join(" ");
+  if (!artist) {
+    artist = "architects";
+  }
+  axios
+    .get(
+      "https://rest.bandsintown.com/artists/" +
+        artist +
+        "/events?app_id=codingbootcamp"
+    )
+    .then(function(response) {
+      console.log(response.data);
+      for (var i = 0; i < response.data.length; i++) {
+        console.log("Artist: " + response.data[i].lineup[0]);
+        console.log("Venue Name: " + response.data[i].venue.name);
+        console.log("Venue Location: " + response.data[i].venue.city);
+        console.log(
+          "Date of Event: " +
+            moment(response.data[i].datetime).format("MM/DD/YYYY")
+        );
+        console.log(
+          "------------------------------------------------------------"
+        );
+      }
+    });
+}
+
 function getMeSpoftify(songName) {
-  if (songName === undefined) {
+  var songName = process.argv.slice(3).join(" ");
+  if (!songName) {
     songName = "The Sign";
   }
   console.log("songName: " + songName);
   spotify.search(
     {
       type: "track",
-      query: songName
+      query: songName,
+      limit: 10
     },
     function(err, response) {
       if (err) {
@@ -53,10 +85,10 @@ function getMeSpoftify(songName) {
 
       console.log("songs" + songs);
       for (var i = 0; i < songs.length; i++) {
-        console.log("Artist(s): " + songs[0].artists[0].name);
-        console.log("Song Name: " + songs[0].name);
+        console.log("Artist(s): " + songs[i].artists[0].name);
+        console.log("Song Name: " + songs[i].name);
         console.log("Album: " + songs[i].album.name);
-        console.log("Preview Link:" + songs[0].preview_url);
+        console.log("Preview Link: " + songs[i].preview_url);
         console.log("--------------------------------------------");
       }
     }
@@ -64,10 +96,14 @@ function getMeSpoftify(songName) {
 }
 
 // Code using OMDB API to search for movies
-function getMeMovie(movies) {
+function getMeMovie(movieName) {
+  var movieName = process.argv.slice(3).join(" ");
+  if (!movieName) {
+    movieName = "Mr. Nobody";
+  }
   axios
     .get(
-      "http://www.omdbapi.com/?t=" + movies + "&y=&plot=short&apikey=trilogy"
+      "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy"
     )
     .then(function(response) {
       console.log("Title of the Movie: " + response.data.Title);
